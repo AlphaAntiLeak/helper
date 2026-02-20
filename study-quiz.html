@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StudyBuddy - Anatomy Exam Prep</title>
+<script src="https://js.puter.com/v2/"></script>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,700;0,900;1,300&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0b0f14;
+  --surface: #131820;
+  --surface2: #1c2330;
+  --border: #252e3d;
+  --accent: #7eb8f7;
+  --accent2: #f7a35b;
+  --accent3: #a78bfa;
+  --text: #e8edf5;
+  --muted: #5a6880;
+  --correct: #4ade80;
+  --wrong: #f87171;
+  --r: 14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'DM Sans',sans-serif;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+body::before{
+  content:'';position:fixed;inset:0;
+  background:
+    radial-gradient(ellipse 60% 40% at 20% 10%, rgba(126,184,247,0.07) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 50% at 80% 90%, rgba(167,139,250,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 60% at 70% 20%, rgba(247,163,91,0.04) 0%, transparent 60%);
+  pointer-events:none;z-index:0;
+}
+.app{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:24px 20px 60px;}
+header{text-align:center;padding:40px 0 32px;}
+header .eyebrow{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--accent);margin-bottom:12px;}
+header h1{font-family:'Fraunces',serif;font-size:clamp(2.2rem,6vw,3.5rem);font-weight:900;line-height:1.1;background:linear-gradient(135deg,var(--text) 0%,var(--accent) 60%,var(--accent3) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:12px;}
+header p{color:var(--muted);font-size:15px;max-width:500px;margin:0 auto;}
+.tabs{display:flex;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:6px;margin-bottom:28px;flex-wrap:wrap;}
+.tab-btn{flex:1;min-width:90px;padding:10px 14px;border:none;border-radius:10px;background:transparent;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;}
+.tab-btn.active{background:var(--surface2);color:var(--text);box-shadow:0 1px 8px rgba(0,0,0,.4);}
+.tab-btn:hover:not(.active){color:var(--text);}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:24px;margin-bottom:20px;}
+.section{display:none;}
+.section.active{display:block;}
+.topic-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-top:24px;}
+.topic-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;cursor:pointer;transition:all .25s;position:relative;overflow:hidden;}
+.topic-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(126,184,247,0.05),transparent);opacity:0;transition:.25s;}
+.topic-card:hover{border-color:var(--accent);transform:translateY(-2px);}
+.topic-card:hover::before{opacity:1;}
+.topic-card .icon{font-size:28px;margin-bottom:10px;}
+.topic-card h3{font-size:15px;font-weight:600;margin-bottom:6px;}
+.topic-card p{font-size:12px;color:var(--muted);line-height:1.5;}
+.topic-card .badge{display:inline-block;margin-top:10px;padding:3px 10px;border-radius:20px;font-family:'DM Mono',monospace;font-size:10px;background:rgba(126,184,247,0.1);color:var(--accent);}
+.quiz-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px;}
+.quiz-meta{font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);}
+.progress-bar{height:4px;background:var(--border);border-radius:4px;margin-bottom:24px;overflow:hidden;}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent3));border-radius:4px;transition:width .4s ease;}
+.question-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:28px;margin-bottom:20px;}
+.question-text{font-size:17px;font-weight:500;line-height:1.6;margin-bottom:24px;}
+.question-type{font-family:'DM Mono',monospace;font-size:10px;color:var(--accent2);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;}
+.options{display:flex;flex-direction:column;gap:10px;}
+.option{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:14px 18px;cursor:pointer;font-size:14px;transition:all .2s;text-align:left;width:100%;color:var(--text);font-family:'DM Sans',sans-serif;}
+.option:hover:not(:disabled){border-color:var(--accent);background:rgba(126,184,247,0.05);}
+.option.correct{border-color:var(--correct)!important;background:rgba(74,222,128,0.08)!important;color:var(--correct);}
+.option.wrong{border-color:var(--wrong)!important;background:rgba(248,113,113,0.08)!important;color:var(--wrong);}
+.option.reveal-correct{border-color:var(--correct)!important;background:rgba(74,222,128,0.05)!important;}
+.option:disabled{cursor:default;}
+.tf-row{display:flex;gap:12px;}
+.tf-btn{flex:1;padding:16px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface);color:var(--text);font-size:15px;font-weight:600;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;}
+.tf-btn:hover:not(:disabled){border-color:var(--accent);}
+.tf-btn.correct{border-color:var(--correct);background:rgba(74,222,128,0.08);color:var(--correct);}
+.tf-btn.wrong{border-color:var(--wrong);background:rgba(248,113,113,0.08);color:var(--wrong);}
+.tf-btn:disabled{cursor:default;}
+.fill-input{width:100%;padding:14px 18px;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;color:var(--text);font-size:15px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s;}
+.fill-input:focus{border-color:var(--accent);}
+.fill-input.correct{border-color:var(--correct);}
+.fill-input.wrong{border-color:var(--wrong);}
+.feedback{padding:14px 18px;border-radius:10px;margin-top:14px;font-size:14px;line-height:1.6;display:none;}
+.feedback.correct{background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.2);color:var(--correct);}
+.feedback.wrong{background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.2);color:var(--wrong);}
+.ai-explain-btn{display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:13px;cursor:pointer;transition:all .2s;margin-top:12px;font-family:'DM Sans',sans-serif;}
+.ai-explain-btn:hover{border-color:var(--accent3);color:var(--accent3);}
+.ai-explain-box{background:rgba(167,139,250,0.07);border:1px solid rgba(167,139,250,0.2);border-radius:10px;padding:16px;margin-top:12px;font-size:13px;line-height:1.7;color:var(--text);display:none;}
+.ai-explain-box .ai-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--accent3);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;}
+.quiz-actions{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
+.btn{padding:12px 24px;border-radius:10px;border:none;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;}
+.btn-primary{background:var(--accent);color:#0b0f14;}
+.btn-primary:hover{filter:brightness(1.1);transform:translateY(-1px);}
+.btn-secondary{background:var(--surface2);border:1px solid var(--border);color:var(--text);}
+.btn-secondary:hover{border-color:var(--accent);}
+.btn-danger{background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.2);color:var(--wrong);}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none!important;}
+.results-card{text-align:center;padding:40px;}
+.score-circle{width:140px;height:140px;border-radius:50%;border:3px solid var(--accent);display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto 24px;background:radial-gradient(circle,rgba(126,184,247,0.05),transparent);}
+.score-circle .score-num{font-family:'Fraunces',serif;font-size:2.8rem;font-weight:900;color:var(--accent);line-height:1;}
+.score-circle .score-label{font-size:11px;color:var(--muted);margin-top:4px;}
+.chat-container{height:380px;overflow-y:auto;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:14px;display:flex;flex-direction:column;gap:12px;}
+.chat-container::-webkit-scrollbar{width:4px;}
+.chat-container::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+.msg{max-width:80%;padding:12px 16px;border-radius:12px;font-size:14px;line-height:1.6;}
+.msg.user{align-self:flex-end;background:rgba(126,184,247,0.12);border:1px solid rgba(126,184,247,0.2);color:var(--text);border-bottom-right-radius:4px;}
+.msg.ai{align-self:flex-start;background:var(--surface);border:1px solid var(--border);color:var(--text);border-bottom-left-radius:4px;}
+.msg.ai .msg-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--accent3);margin-bottom:6px;letter-spacing:1px;}
+.chat-row{display:flex;gap:10px;}
+.chat-input{flex:1;padding:13px 16px;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s;}
+.chat-input:focus{border-color:var(--accent);}
+.quick-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
+.chip{padding:7px 14px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:12px;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;}
+.chip:hover{border-color:var(--accent);color:var(--accent);}
+.flashcard-wrap{perspective:1000px;margin-bottom:20px;}
+.flashcard{width:100%;min-height:220px;position:relative;transform-style:preserve-3d;transition:transform .5s cubic-bezier(.4,2,.4,.8);cursor:pointer;}
+.flashcard.flipped{transform:rotateY(180deg);}
+.fc-face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:var(--r);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;border:1px solid var(--border);min-height:220px;}
+.fc-front{background:var(--surface2);}
+.fc-back{background:linear-gradient(135deg,rgba(126,184,247,0.05),rgba(167,139,250,0.05));border-color:rgba(126,184,247,0.2);transform:rotateY(180deg);}
+.fc-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:16px;letter-spacing:2px;}
+.fc-term{font-family:'Fraunces',serif;font-size:1.4rem;font-weight:700;}
+.fc-def{font-size:14px;line-height:1.7;color:var(--text);}
+.fc-hint{font-size:11px;color:var(--muted);margin-top:12px;}
+.fc-nav{display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:16px;}
+.fc-counter{font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px;text-align:center;}
+.stat-num{font-family:'Fraunces',serif;font-size:2rem;font-weight:900;color:var(--accent);}
+.stat-label{font-size:12px;color:var(--muted);margin-top:4px;}
+.section-title{font-family:'Fraunces',serif;font-size:1.5rem;font-weight:700;margin-bottom:6px;}
+.section-sub{font-size:13px;color:var(--muted);margin-bottom:20px;}
+.divider{height:1px;background:var(--border);margin:20px 0;}
+select{background:var(--surface);border:1.5px solid var(--border);color:var(--text);border-radius:8px;padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none;}
+select:focus{border-color:var(--accent);}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(126,184,247,0.2);border-top-color:var(--accent);border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.typing{display:flex;gap:4px;align-items:center;padding:4px 0;}
+.dot{width:6px;height:6px;background:var(--muted);border-radius:50%;animation:bounce 1.2s infinite;}
+.dot:nth-child(2){animation-delay:.2s;}
+.dot:nth-child(3){animation-delay:.4s;}
+@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+.toast{position:fixed;bottom:30px;right:30px;z-index:999;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 20px;font-size:13px;transform:translateY(100px);opacity:0;transition:all .3s;max-width:300px;}
+.toast.show{transform:translateY(0);opacity:1;}
+@media(max-width:600px){.tabs{gap:4px;}.tab-btn{min-width:60px;padding:8px 8px;font-size:11px;}header h1{font-size:2rem;}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="eyebrow">Anatomy & Physiology Exam Prep</div>
+    <h1>StudyBuddy ✨</h1>
+    <p>Tissues, Histology & Integumentary System — powered by Gemini Flash AI</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('home')">🏠 Home</button>
+    <button class="tab-btn" onclick="switchTab('quiz')">🧪 Quiz</button>
+    <button class="tab-btn" onclick="switchTab('flashcards')">🃏 Flashcards</button>
+    <button class="tab-btn" onclick="switchTab('ai')">🤖 Ask AI</button>
+    <button class="tab-btn" onclick="switchTab('stats')">📊 Stats</button>
+  </div>
+
+  <!-- HOME -->
+  <div id="sec-home" class="section active">
+    <div class="section-title">What do you want to study?</div>
+    <div class="section-sub">Pick a topic below or use the tabs above to explore all tools.</div>
+    <div class="topic-grid">
+      <div class="topic-card" onclick="startQuiz('tissues')">
+        <div class="icon">🧫</div>
+        <h3>Tissues & Histology</h3>
+        <p>Epithelium, connective tissue, muscle, nervous tissue — types, characteristics, examples.</p>
+        <span class="badge">25 questions</span>
+      </div>
+      <div class="topic-card" onclick="startQuiz('integumentary')">
+        <div class="icon">🧴</div>
+        <h3>Integumentary System</h3>
+        <p>Epidermis layers, dermis, hair, nails, glands, burns, touch receptors.</p>
+        <span class="badge">25 questions</span>
+      </div>
+      <div class="topic-card" onclick="startQuiz('mixed')">
+        <div class="icon">🎯</div>
+        <h3>Full Exam Mix</h3>
+        <p>All topics shuffled together. Best simulation of your actual quiz.</p>
+        <span class="badge">40 questions</span>
+      </div>
+      <div class="topic-card" onclick="startAIQuiz()">
+        <div class="icon">✨</div>
+        <h3>AI-Generated Quiz</h3>
+        <p>Gemini Flash writes brand-new questions just for you. Fresh every time.</p>
+        <span class="badge">AI powered</span>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;flex-wrap:wrap;">
+      <div class="card" style="margin-bottom:0">
+        <div style="font-size:24px;margin-bottom:8px;">📋</div>
+        <div style="font-weight:600;margin-bottom:6px;">Lab Quiz</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.6;">50 questions · 1 min 30 sec per station (round 1) · 45 sec (round 2) · ~30 stations · Structure ID, fill-in, physiology</div>
+      </div>
+      <div class="card" style="margin-bottom:0">
+        <div style="font-size:24px;margin-bottom:8px;">📝</div>
+        <div style="font-weight:600;margin-bottom:6px;">Lecture Quiz</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.6;">25–35 questions · 50 pts · ~50% MC · T/F · short answer (1–3 sentences or drawing/flowchart)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- QUIZ -->
+  <div id="sec-quiz" class="section">
+    <div id="quiz-setup">
+      <div class="section-title">Configure Your Quiz</div>
+      <div class="section-sub">Choose your topic and question types.</div>
+      <div class="card">
+        <div style="display:grid;gap:16px;">
+          <div>
+            <label style="font-size:13px;color:var(--muted);display:block;margin-bottom:6px;">Topic</label>
+            <select id="quiz-topic-sel" style="width:100%">
+              <option value="tissues">Tissues &amp; Histology</option>
+              <option value="integumentary">Integumentary System</option>
+              <option value="mixed">Mixed — All Topics</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:13px;color:var(--muted);display:block;margin-bottom:8px;">Question Types</label>
+            <div style="display:flex;gap:16px;flex-wrap:wrap;">
+              <label style="font-size:14px;display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" id="q-mc" checked> Multiple Choice</label>
+              <label style="font-size:14px;display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" id="q-tf" checked> True / False</label>
+              <label style="font-size:14px;display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" id="q-fill" checked> Fill in Blank</label>
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="beginQuiz()" style="width:fit-content;">Start Quiz →</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="quiz-area" style="display:none;">
+      <div class="quiz-header">
+        <div>
+          <div class="quiz-meta" id="quiz-topic-label"></div>
+          <div style="font-weight:600;margin-top:2px;" id="q-counter"></div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span id="score-display" style="font-family:'DM Mono',monospace;font-size:13px;color:var(--correct);">Score: 0</span>
+          <button class="btn btn-danger" onclick="endQuiz()" style="padding:8px 14px;font-size:12px;">End</button>
+        </div>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="q-progress"></div></div>
+
+      <div class="question-card">
+        <div class="question-type" id="q-type-label"></div>
+        <div class="question-text" id="q-text"></div>
+        <div id="q-body"></div>
+        <div class="feedback" id="q-feedback"></div>
+        <button class="ai-explain-btn" id="ai-explain-btn" onclick="aiExplain()" style="display:none;">
+          <span>✨</span> Explain with AI
+        </button>
+        <div class="ai-explain-box" id="ai-explain-box">
+          <div class="ai-label">Gemini Flash</div>
+          <div id="ai-explain-text"></div>
+        </div>
+      </div>
+
+      <div class="quiz-actions">
+        <button class="btn btn-secondary" id="btn-submit" onclick="submitAnswer()">Check Answer</button>
+        <button class="btn btn-primary" id="btn-next" onclick="nextQuestion()" disabled>Next →</button>
+      </div>
+    </div>
+
+    <div id="quiz-results" style="display:none;">
+      <div class="card results-card">
+        <div class="score-circle">
+          <div class="score-num" id="final-score">0</div>
+          <div class="score-label">/ <span id="total-qs">0</span></div>
+        </div>
+        <h2 style="font-family:'Fraunces',serif;margin-bottom:8px;" id="result-title"></h2>
+        <p style="color:var(--muted);font-size:14px;margin-bottom:24px;" id="result-msg"></p>
+        <div id="result-breakdown" style="text-align:left;margin-bottom:24px;"></div>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+          <button class="btn btn-primary" onclick="beginQuiz()">Retry</button>
+          <button class="btn btn-secondary" onclick="showSetup()">New Quiz</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FLASHCARDS -->
+  <div id="sec-flashcards" class="section">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
+      <div>
+        <div class="section-title">Flashcards</div>
+        <div class="section-sub" style="margin-bottom:0">Click to flip · Arrow keys to navigate · Space to flip</div>
+      </div>
+      <select id="fc-topic" onchange="loadFlashcards()">
+        <option value="tissues">Tissues</option>
+        <option value="integumentary">Integumentary</option>
+        <option value="mixed">All Topics</option>
+      </select>
+    </div>
+    <div class="fc-nav">
+      <button class="btn btn-secondary" onclick="prevCard()" style="padding:10px 20px;">←</button>
+      <span class="fc-counter" id="fc-count">1 / 1</span>
+      <button class="btn btn-secondary" onclick="nextCard()" style="padding:10px 20px;">→</button>
+    </div>
+    <div class="flashcard-wrap">
+      <div class="flashcard" id="flashcard" onclick="flipCard()">
+        <div class="fc-face fc-front">
+          <div class="fc-label">TERM</div>
+          <div class="fc-term" id="fc-term">Loading...</div>
+          <div class="fc-hint">Click to see definition</div>
+        </div>
+        <div class="fc-face fc-back">
+          <div class="fc-def" id="fc-def"></div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:center;margin-top:16px;">
+      <button class="btn btn-secondary" onclick="shuffleCards()">🔀 Shuffle</button>
+      <button class="btn btn-secondary" onclick="aiGenCards()">✨ AI: More Cards</button>
+    </div>
+    <div id="fc-ai-status" style="text-align:center;margin-top:12px;font-size:13px;color:var(--muted);display:none;"></div>
+  </div>
+
+  <!-- AI CHAT -->
+  <div id="sec-ai" class="section">
+    <div class="section-title">Ask the AI Tutor</div>
+    <div class="section-sub">Powered by Gemini Flash — ask anything from the study guide</div>
+    <div class="quick-chips">
+      <button class="chip" onclick="sendChip('What are the layers of the epidermis in order from deep to superficial?')">Epidermis layers</button>
+      <button class="chip" onclick="sendChip('Explain simple vs stratified epithelium with examples')">Simple vs Stratified</button>
+      <button class="chip" onclick="sendChip('What is the difference between eccrine and apocrine sweat glands?')">Sweat glands</button>
+      <button class="chip" onclick="sendChip('Explain the Rule of Nines for burns')">Rule of Nines</button>
+      <button class="chip" onclick="sendChip('What are the 3 types of cartilage and where is each found?')">Cartilage types</button>
+      <button class="chip" onclick="sendChip('Describe the 3 components of connective tissue')">CT components</button>
+      <button class="chip" onclick="sendChip('Give me 5 quiz questions on the integumentary system')">Quick quiz</button>
+      <button class="chip" onclick="sendChip('What is merocrine vs holocrine secretion with examples?')">Secretion types</button>
+      <button class="chip" onclick="sendChip('Describe the hair follicle structure')">Hair follicle</button>
+      <button class="chip" onclick="sendChip('What makes cardiac muscle unique compared to skeletal and smooth muscle?')">Muscle types</button>
+    </div>
+    <div class="chat-container" id="chat-container">
+      <div class="msg ai">
+        <div class="msg-label">GEMINI FLASH</div>
+        Hey! I'm your AI tutor for this anatomy exam. I know everything about Tissues, Histology, and the Integumentary System from your study guide. Ask me anything — explanations, mnemonics, quiz questions, or just "help me understand X!" 💪
+      </div>
+    </div>
+    <div class="chat-row">
+      <input class="chat-input" id="chat-input" placeholder="Ask about tissues, skin, histology..." onkeydown="if(event.key==='Enter')sendChat()">
+      <button class="btn btn-primary" onclick="sendChat()">Send</button>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div id="sec-stats" class="section">
+    <div class="section-title">Your Progress</div>
+    <div class="section-sub">Track your performance across all quizzes</div>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-num" id="st-total">0</div><div class="stat-label">Questions Answered</div></div>
+      <div class="stat-card"><div class="stat-num" id="st-correct">0</div><div class="stat-label">Correct</div></div>
+      <div class="stat-card"><div class="stat-num" id="st-pct" style="color:var(--accent2)">—</div><div class="stat-label">Accuracy</div></div>
+      <div class="stat-card"><div class="stat-num" id="st-streak" style="color:var(--accent3)">0</div><div class="stat-label">Streak 🔥</div></div>
+    </div>
+    <div class="divider"></div>
+    <div class="section-title" style="font-size:1.1rem;margin-bottom:12px;">Review These Areas</div>
+    <div id="weak-areas" style="font-size:14px;color:var(--muted);">Complete some quizzes to see your weak areas!</div>
+    <div class="divider"></div>
+    <button class="btn btn-danger" onclick="resetStats()" style="font-size:13px;">Reset Stats</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// =====================================================
+// STUDY CONTEXT FOR AI
+// =====================================================
+const CTX = `You are an expert anatomy and physiology tutor. The student is studying for a quiz on:
+
+TISSUES & HISTOLOGY:
+- Epithelium: polarity (apical=free surface, basal=toward BM), tight junctions, desmosomes, basement membrane (basal lamina + reticular lamina/lamina reticularis), avascular, innervated
+- Epithelium types: simple vs stratified; squamous/cuboidal/columnar; keratinized vs nonkeratinized
+- Special types: pseudostratified ciliated columnar (respiratory tract), transitional (bladder), endothelium (blood vessels), mesothelium (body cavities)
+- Glandular epithelia: endocrine (hormones, no duct), exocrine (ducts); goblet cells = unicellular exocrine glands (mucin+water=mucus); multicellular exocrine: simple/compound, tubular/alveolar/tubuloalveolar; merocrine (exocytosis, cell intact), holocrine (cell dies)
+- Connective tissue: ECM = ground substance + fibers; mesenchyme origin; cells: fibroblasts, chondroblasts, osteoblasts, adipocytes, WBCs, mast cells (histamine+heparin), macrophages; fibers: collagen (strength), elastic (recoil), reticular (framework)
+- CT types: Loose (areolar, adipose, reticular), Dense (regular, irregular, elastic), Cartilage (hyaline, elastic, fibrocartilage), Bone, Blood (fibrinogen→fibrin)
+- Muscle: skeletal=striated+voluntary, cardiac=striated+involuntary, smooth=nonstriated+involuntary
+- Neurons: cell body, dendrites, axon, Nissl bodies; neuroglial cells
+
+INTEGUMENTARY SYSTEM:
+- Epidermis: stratified keratinized squamous epithelium; cells: keratinocytes, melanocytes, dendritic cells, tactile/Merkel cells; thick vs thin skin
+- Layers deep to superficial: Basale, Spinosum, Granulosum, Lucidum (thick only), Corneum (mnemonic: "Baby Spits Grapes and Corn")
+- Dermis: papillary (dermal papillae, Meissner's/tactile corpuscles, dermal ridges→epidermal ridges→fingerprints) and reticular (dense irregular CT, cleavage lines, flexure lines, dermal vascular plexus)
+- Melanin produced by melanocytes, transferred to keratinocytes for UV protection
+- Hair: shaft layers = medulla (core), cortex (middle), cuticle (outer); follicle = bulb, hair matrix (actively divides), hair follicle receptor, peripheral CT sheath, glassy membrane, epithelial root sheath, hair bulge; arrector pili = smooth muscle, causes goosebumps, squeezes sebaceous gland
+- Nails: nail plate, nail folds, eponychium/cuticle (proximal), hyponychium (under free edge), nail matrix (growth), root, lunule
+- Sweat glands: eccrine (everywhere, thermoregulation, merocrine secretion, opens at pore), apocrine (axilla/groin, viscous, merocrine secretion, opens in hair follicle)
+- Sebaceous glands: sebum, holocrine secretion, outgrowths of hair follicles, arrector pili pushes sebum out
+- Burns: 1st=epidermis only, 2nd=epidermis+partial dermis (blisters), 3rd=full thickness (painless center, nerve destroyed); Rule of Nines: head=9%, each arm=9%, front trunk=18%, back trunk=18%, each leg=18%, perineum=1%
+- Touch receptors: Meissner's corpuscles (light touch, papillary dermis), lamellar/Pacinian corpuscles (deep pressure/vibration, reticular dermis), Merkel discs (sustained light touch, stratum basale)
+
+Be concise, use mnemonics, give examples. For quizzes, include the correct answer clearly.`;
+
+// =====================================================
+// QUESTION BANKS
+// =====================================================
+const QS = {
+tissues: [
+  {type:'mc',q:'What type of epithelium lines blood vessels (endothelium)?',opts:['Simple squamous','Simple cuboidal','Stratified columnar','Transitional'],a:0,exp:'Endothelium is simple squamous epithelium. The single flat cell layer allows efficient exchange of gases, nutrients, and wastes between blood and tissues.'},
+  {type:'tf',q:'Epithelial tissue is avascular — meaning it has NO blood vessels.',a:true,exp:'Correct! "A-" means without, "vascular" = blood vessels. Epithelium gets nutrients by diffusion from the underlying connective tissue. This is why cuts to superficial skin may not bleed immediately.'},
+  {type:'mc',q:'Which connective tissue cells contain granules filled with histamine and heparin?',opts:['Fibroblasts','Macrophages','Mast cells','Adipocytes'],a:2,exp:'Mast cells! Their granules release histamine (triggers inflammation and allergic reactions) and heparin (anticoagulant). They are found in loose connective tissue throughout the body.'},
+  {type:'fill',q:'The ________ membrane anchors epithelium to underlying connective tissue and is made of the basal lamina + reticular lamina.',a:'basement',exp:'The basement membrane = basal lamina (secreted by epithelial cells) + reticular lamina/lamina reticularis (secreted by CT fibroblasts). It provides structural support and acts as a filtration barrier.'},
+  {type:'mc',q:'Pseudostratified ciliated columnar epithelium is found lining which organ?',opts:['Urinary bladder','Upper respiratory tract','Skin epidermis','Uterine tubes'],a:1,exp:'The upper respiratory tract (trachea, bronchi) is lined by pseudostratified ciliated columnar epithelium. Cilia sweep a mucus escalator upward to trap and remove pathogens and particles.'},
+  {type:'tf',q:'Goblet cells are unicellular exocrine glands that secrete mucin, which combines with water to form mucus.',a:true,exp:'Exactly right! Goblet cells are cup-shaped unicellular exocrine glands scattered in columnar epithelia of the respiratory and digestive tracts. Mucin (the secretion) + water = mucus.'},
+  {type:'mc',q:'All connective tissues share what common embryonic origin?',opts:['Ectoderm','Endoderm','Mesenchyme','Neuroectoderm'],a:2,exp:'Mesenchyme! This embryonic connective tissue (derived from mesoderm) gives rise to all adult connective tissue types. This shared origin is one of the defining characteristics of CT.'},
+  {type:'mc',q:'Which cartilage type is most abundant and found covering articular surfaces of bones?',opts:['Elastic cartilage','Fibrocartilage','Hyaline cartilage','Reticular cartilage'],a:2,exp:'Hyaline cartilage is most common — glassy appearance, fine collagen II fibers. Found at: articular surfaces, costal cartilages, nose, trachea rings, larynx, and the fetal skeleton.'},
+  {type:'tf',q:'Skeletal muscle is striated and under voluntary control.',a:true,exp:'Yes! Skeletal muscle has stripes (striations) from regular sarcomere arrangement. It is controlled consciously via somatic motor neurons — you choose when to flex your bicep!'},
+  {type:'mc',q:'In merocrine secretion, the gland releases its product by:',opts:['The cell dying and rupturing','Losing a portion of cytoplasm','Exocytosis (vesicle fusion), cell stays intact','Osmosis across the membrane'],a:2,exp:'Merocrine = exocytosis. The most common secretion method. The secretory vesicle fuses with the plasma membrane and releases its contents — the cell remains intact and can keep secreting. Used by eccrine sweat glands, salivary glands, pancreas.'},
+  {type:'fill',q:'The most abundant fiber type in dense regular connective tissue (tendons) is ________ fibers.',a:'collagen',exp:'Collagen fibers dominate dense regular CT! They are arranged in parallel bundles giving tremendous tensile strength in one direction. Tendons connect muscle to bone; ligaments connect bone to bone.'},
+  {type:'mc',q:'Which CT type has a fluid matrix (plasma) with cells including RBCs and WBCs?',opts:['Areolar CT','Adipose CT','Blood','Reticular CT'],a:2,exp:'Blood is a specialized connective tissue. Ground substance = plasma (fluid). Cells = RBCs, WBCs, platelets. "Fibers" = fibrinogen, which forms fibrin clots during coagulation.'},
+  {type:'tf',q:'Cardiac muscle is striated but under involuntary control.',a:true,exp:'Correct! Cardiac muscle has striations (like skeletal), but is involuntary — controlled by the autonomic nervous system and intrinsic pacemaker cells (SA node). You cannot consciously stop your heart.'},
+  {type:'mc',q:'Nissl bodies (chromatophilic substance) are found in which part of a neuron?',opts:['Axon terminal','Myelin sheath','Cell body (soma)','Synaptic cleft'],a:2,exp:'Nissl bodies are clusters of rough ER and ribosomes found in the cell body (soma) and sometimes proximal dendrites. They are the protein synthesis powerhouse of neurons. They are ABSENT from axons.'},
+  {type:'mc',q:'Which secretion mode involves the entire cell destroying itself to release the product?',opts:['Merocrine','Apocrine','Holocrine','Endocrine'],a:2,exp:'Holocrine secretion! The cell accumulates its secretory product (like sebum/oil), then ruptures and dies — releasing everything. The dead cell IS the secretion. Sebaceous (oil) glands use this method.'},
+  {type:'fill',q:'Adipose tissue consists primarily of ________ cells that store lipid.',a:'adipocyte',alt:['adipocytes'],exp:'Adipocytes! Each adipocyte has one huge lipid droplet that takes up nearly the entire cell, pushing the nucleus to the edge. Adipose tissue functions in energy storage, thermal insulation, and physical cushioning.'},
+  {type:'mc',q:'What makes keratinized stratified squamous epithelium tough and waterproof?',opts:['Collagen fibers','Keratin protein filling dead surface cells','Mucus coating','Only tight junctions'],a:1,exp:'Keratin! The outermost cells of keratinized stratified squamous epithelium are dead and packed with the fibrous protein keratin. This creates a tough, dry, water-resistant barrier — perfect for the skin epidermis.'},
+  {type:'tf',q:'Reticular fibers form the structural framework (stroma) of organs like the liver, spleen, and lymph nodes.',a:true,exp:'True! Reticular fibers (thin collagen type III) form delicate branching networks that support soft organs. Think of them as the scaffolding or cage that holds organ cells in place.'},
+  {type:'mc',q:'Which cell type in connective tissue is the primary producer of ECM fibers and ground substance?',opts:['Osteoblasts','Mast cells','Fibroblasts','Macrophages'],a:2,exp:'Fibroblasts are the workhorse cells of connective tissue proper. They secrete and maintain all ECM components including collagen, elastic, and reticular fibers plus the ground substance. Mature, less active form = fibrocyte.'},
+  {type:'tf',q:'Smooth muscle is non-striated and under involuntary control.',a:true,exp:'Correct! Smooth muscle lacks striations because actin and myosin are not organized into regular sarcomeres. It lines hollow organs (GI tract, bladder, blood vessels) and operates involuntarily under autonomic control.'},
+  {type:'mc',q:'Transitional epithelium is characteristic of which organ?',opts:['Trachea','Urinary bladder','Small intestine','Heart chambers'],a:1,exp:'Transitional epithelium (urothelium) lines the urinary bladder, ureters, and renal pelvis. It stretches when the bladder fills (cells flatten and thin) and returns to a rounded/dome shape when empty.'},
+  {type:'mc',q:'Simple columnar epithelium with microvilli (brush border) is found lining the:',opts:['Trachea','Urinary bladder','Small intestine','Skin'],a:2,exp:'The small intestine is lined by simple columnar epithelium with apical microvilli (brush border). The microvilli massively increase surface area for nutrient absorption — up to 600-fold!'},
+  {type:'fill',q:'The apical surface of epithelium faces ________ (outward/free surface), while the basal surface faces the basement membrane.',a:'outward',alt:['free','lumen','free surface'],exp:'Epithelial polarity is key! Apical = free surface facing the lumen or exterior. Basal = the side connected to the basement membrane. This polarity allows directional transport across epithelial sheets.'},
+  {type:'mc',q:'Elastic cartilage differs from hyaline cartilage because it contains:',opts:['More collagen type I fibers','Elastic fibers in the matrix','Calcified ground substance','No chondrocytes'],a:1,exp:'Elastic cartilage contains elastic fibers in addition to collagen, making it flexible and springy. Found where flexible support is needed: external ear (pinna), epiglottis, auditory tube. It maintains shape but bends.'},
+  {type:'tf',q:'The basal lamina is secreted by epithelial cells, while the reticular lamina is secreted by connective tissue cells.',a:true,exp:'True! The basement membrane has two layers: basal lamina (secreted by epithelial cells, contains laminin and collagen IV) and reticular lamina/lamina reticularis (secreted by fibroblasts in underlying CT, contains collagen III/reticular fibers).'},
+],
+integumentary: [
+  {type:'mc',q:'Which epidermal layer is found ONLY in thick skin (palms and soles)?',opts:['Stratum corneum','Stratum lucidum','Stratum granulosum','Stratum spinosum'],a:1,exp:'Stratum lucidum ("clear layer") exists only in thick skin. It\'s a thin, translucent layer of dead cells between the granulosum and corneum. Thick skin = palms of hands, soles of feet (areas of heavy friction).'},
+  {type:'mc',q:'From deepest to most superficial, what is the correct order of epidermal layers?',opts:['Corneum→Granulosum→Spinosum→Basale','Basale→Spinosum→Granulosum→Corneum','Spinosum→Basale→Granulosum→Corneum','Basale→Granulosum→Spinosum→Corneum'],a:1,exp:'Mnemonic: "Baby Spits Grapes and Corn" → Basale, Spinosum, Granulosum, (Lucidum in thick skin), Corneum. Deep to superficial. Cells are born in basale and die by the time they reach corneum.'},
+  {type:'fill',q:'The ________ pili is a small smooth muscle attached to the hair follicle that causes "goosebumps" when it contracts.',a:'arrector',exp:'Arrector pili = "raises the hair." This smooth muscle contracts in response to cold or fear, erecting the hair. It also squeezes the attached sebaceous gland, pushing sebum onto the skin. Involuntary muscle!'},
+  {type:'mc',q:'The epidermis is classified as what type of epithelium?',opts:['Simple squamous','Stratified keratinized squamous','Pseudostratified columnar','Transitional'],a:1,exp:'Stratified keratinized squamous epithelium! Stratified = multiple layers (for protection). Squamous = flat surface cells. Keratinized = outermost cells are dead and filled with keratin protein, creating the tough waterproof barrier.'},
+  {type:'tf',q:'Both eccrine AND apocrine sweat glands use merocrine (exocytosis) secretion.',a:true,exp:'Yes! Despite being called "apocrine," these glands actually secrete by exocytosis (merocrine method) — not by losing cytoplasm. The name is historical/misleading. Both gland types use merocrine secretion.'},
+  {type:'mc',q:'Which epidermal cell produces melanin pigment?',opts:['Keratinocytes','Melanocytes','Dendritic cells','Merkel cells'],a:1,exp:'Melanocytes produce melanin in organelles called melanosomes. The melanosomes are then transferred to surrounding keratinocytes, forming a "umbrella" cap over the nucleus to protect DNA from UV radiation damage.'},
+  {type:'mc',q:'In the Rule of Nines, each arm represents approximately what percentage of body surface area?',opts:['4.5%','9%','18%','1%'],a:1,exp:'Each arm = 9% (Rule of Nines). Head = 9%, each arm = 9%, chest = 18%, back = 18%, each leg = 18%, perineum = 1%. Total = 100%. Used to estimate fluid/burn treatment needs.'},
+  {type:'tf',q:'Sebaceous glands use holocrine secretion (the cell dies to release sebum).',a:true,exp:'Correct! Sebaceous glands are classic holocrine glands. The cells accumulate lipid, die, and the entire cell contents (= sebum) are released. The arrector pili muscle contracting helps squeeze sebum out.'},
+  {type:'mc',q:'Which receptor detects deep pressure and vibration and is found deep in the dermis?',opts:["Meissner's corpuscle","Free nerve ending","Lamellar (Pacinian) corpuscle","Merkel disc"],a:2,exp:'Lamellar (Pacinian) corpuscles detect deep pressure, high-frequency vibration, and stretch. They are large, onion-shaped encapsulated receptors located deep in the reticular dermis and hypodermis.'},
+  {type:'fill',q:'The whitish crescent-shaped area at the base of the nail plate is called the ________.',a:'lunule',alt:['lunula'],exp:'The lunule ("little moon") is the visible portion of the nail matrix peeking out from under the nail fold. It appears white because the thicker nail matrix obscures the underlying blood vessels that give the rest of the nail its pink color.'},
+  {type:'mc',q:'What is the primary content of the papillary dermis?',opts:['Dense irregular CT with thick collagen','Adipose tissue for cushioning','Loose CT with dermal papillae, capillaries, Meissner\'s corpuscles','Only elastic fibers'],a:2,exp:'The papillary dermis is loose CT with projections (dermal papillae) that interdigitate with epidermal ridges. It contains capillaries (nourish avascular epidermis), Meissner\'s corpuscles (light touch), and forms dermal ridges → fingerprints.'},
+  {type:'tf',q:'Fingerprints are created by epidermal ridges that form over dermal ridges in the papillary dermis.',a:true,exp:'Correct! The sequence: dermal ridges (papillary dermis) → push up on epidermis → epidermal ridges → visible as friction ridges (fingerprints). These form before birth and remain unique to each individual throughout life.'},
+  {type:'mc',q:'What does sebum do for the skin?',opts:['Regulates temperature via evaporation','Lubricates skin/hair, slows water loss, has antimicrobial properties','Produces melanin to block UV','Detects light touch sensations'],a:1,exp:'Sebum (oily secretion of sebaceous glands) coats the skin and hair shaft to: lubricate and soften them, slow transepidermal water loss, and provide mild antimicrobial/antifungal activity.'},
+  {type:'mc',q:'Which layer of the epidermis contains the stem cells that continuously divide to renew the skin?',opts:['Stratum corneum','Stratum granulosum','Stratum lucidum','Stratum basale'],a:3,exp:'Stratum basale (also called stratum germinativum = "generating layer"). Stem cells here divide, producing daughter cells that migrate upward through the layers, filling with keratin, and eventually dying to become the protective corneum.'},
+  {type:'fill',q:'The ________ is the specialized epidermis under the free edge of the nail plate that seals the junction between nail and fingertip.',a:'hyponychium',exp:'Hyponychium = "under the nail." This thickened epidermis under the free edge creates a seal to prevent pathogens from getting under the nail. The eponychium (cuticle) seals the proximal nail fold.'},
+  {type:'tf',q:'Apocrine sweat glands are found concentrated in the axillary (armpit) and groin regions.',a:true,exp:'True! Apocrine glands are limited to axilla, anogenital region, and areolae (around nipples). Their secretion is viscous and protein-rich — bacteria on the skin break it down, creating body odor. They become active at puberty.'},
+  {type:'mc',q:'Meissner\'s (tactile) corpuscles are located in:',opts:['Reticular dermis','Hypodermis','Dermal papillae (papillary dermis)','Stratum spinosum'],a:2,exp:'Meissner\'s corpuscles are in the dermal papillae of the papillary dermis. They detect light touch, fine texture, and slow vibrations. They are most concentrated in fingertips, lips, and other sensitive areas.'},
+  {type:'mc',q:'The hair matrix is best described as:',opts:['The outermost layer of the hair shaft','Actively dividing cells at the base of the hair bulb that produce the hair','The protein filling the hair medulla','The nerve ring around the follicle'],a:1,exp:'The hair matrix is the actively proliferating epithelial tissue at the bottom of the hair bulb. These cells divide and differentiate to produce the hair shaft layers from inside out: medulla → cortex → cuticle. The dermal papilla supplies blood.'},
+  {type:'tf',q:'The epidermis contains blood vessels that directly supply nutrients to keratinocytes.',a:false,exp:'FALSE! The epidermis is AVASCULAR — no blood vessels. Keratinocytes rely entirely on diffusion of oxygen and nutrients from blood vessels in the dermis below. This is why scraping off just the epidermis (abrasion) doesn\'t bleed.'},
+  {type:'mc',q:'A third-degree (full thickness) burn is characterized by:',opts:['Redness, pain, no blisters','Blisters, partial dermis destroyed, very painful','Painless center, total destruction of epidermis and dermis','Only the epidermis affected'],a:2,exp:'3rd-degree burns destroy the entire epidermis AND dermis. The center may be painless because nerve endings are destroyed. The area may appear leathery, white, brown, or charred. Skin grafts are needed; no self-repair of skin appendages.'},
+  {type:'fill',q:'The ________ cells (Merkel cells) in the stratum basale detect sustained light touch.',a:'tactile epithelial',alt:['merkel','tactile'],exp:'Tactile epithelial cells (Merkel cells) associate with flattened sensory nerve endings called Merkel discs. They detect sustained, fine touch and are responsible for recognizing texture and object shape. Found in stratum basale.'},
+  {type:'mc',q:'From inside to outside, the layers of the hair shaft are:',opts:['Cuticle→Cortex→Medulla','Cortex→Medulla→Cuticle','Medulla→Cortex→Cuticle','Cuticle→Medulla→Cortex'],a:2,exp:'Medulla (innermost core, loosely arranged cells) → Cortex (middle, contains pigment/melanin) → Cuticle (outermost, overlapping scale-like cells that protect inner layers). Think: inside out like an onion.'},
+  {type:'tf',q:'Cleavage lines (Langer\'s lines) in the dermis are clinically important for surgical incisions.',a:true,exp:'True! Langer\'s lines reflect the orientation of collagen fiber bundles in the reticular dermis. Incisions PARALLEL to these lines remain closed and heal with minimal scarring. Cuts ACROSS them can gape open and create wider scars.'},
+  {type:'mc',q:'Most sebaceous glands are outgrowths of:',opts:['Eccrine sweat gland ducts','Hair follicle epithelium','The dermis directly','Epidermal keratinocytes'],a:1,exp:'Sebaceous glands develop embryologically as outgrowths of the hair follicle epithelium, forming the pilosebaceous unit (follicle + sebaceous gland). The arrector pili muscle connects them — when it contracts, it squeezes sebum up the follicle.'},
+  {type:'mc',q:'The nail matrix (growth zone of nails) is located:',opts:['Under the free edge of the nail','Under the proximal nail fold (at the base/root)','In the nail plate itself','At the hyponychium'],a:1,exp:'The nail matrix is under the proximal nail fold at the base of the nail. It is the germinal layer that actively divides to produce new nail plate cells. The lunule (white crescent) marks the visible edge of the nail matrix.'},
+],
+};
+QS.mixed = [...QS.tissues, ...QS.integumentary];
+
+// =====================================================
+// FLASHCARD BANKS
+// =====================================================
+const FC = {
+tissues: [
+  {term:'Histology',def:'The microscopic study of tissues. From Greek "histos" (tissue) + "logos" (study).'},
+  {term:'4 Types of Tissue',def:'Epithelial, Connective, Muscle, Nervous — the four primary tissue types in the body.'},
+  {term:'Epithelium – Key Features',def:'Avascular (no blood vessels), innervated (has nerve fibers), connected to CT via basement membrane, cells have apical-basal polarity, held together by tight junctions and desmosomes.'},
+  {term:'Basement Membrane',def:'Anchors epithelium to underlying CT. Made of: Basal lamina (secreted by epithelial cells) + Reticular lamina / Lamina reticularis (secreted by CT fibroblasts).'},
+  {term:'Tight Junctions',def:'Cell junctions that seal neighboring epithelial cells together, preventing leakage of substances between cells (e.g., in intestinal lining, blood-brain barrier).'},
+  {term:'Desmosomes',def:'Strong mechanical junctions that act like "spot welds" or rivets. Resist pulling and shearing forces. Very abundant in skin epidermis and cardiac muscle.'},
+  {term:'Simple vs. Stratified Epithelium',def:'Simple = one cell layer, all cells touch basement membrane (functions: absorption, filtration, secretion). Stratified = multiple layers, only basal layer touches BM (functions: protection against abrasion).'},
+  {term:'Squamous / Cuboidal / Columnar',def:'Classification based on SHAPE of cells. Squamous = flat/scale-like. Cuboidal = cube-shaped (equal height/width). Columnar = taller than wide.'},
+  {term:'Pseudostratified Ciliated Columnar',def:'Appears stratified but is ONE layer (all cells touch BM). Not all cells reach the surface. Has goblet cells and cilia. Lines upper respiratory tract. Cilia sweep mucus "escalator" upward.'},
+  {term:'Transitional Epithelium',def:'Stratified; changes shape when stretched. Lines urinary bladder, ureters. Rounded cells (empty bladder) → flattened cells (full bladder).'},
+  {term:'Endothelium',def:'Simple squamous epithelium lining the inner surface of blood and lymphatic vessels.'},
+  {term:'Mesothelium',def:'Simple squamous epithelium lining the body\'s serous cavities: pleura (lungs), pericardium (heart), peritoneum (abdomen).'},
+  {term:'Merocrine Secretion',def:'Most common. Releases secretion via exocytosis — vesicle fuses with plasma membrane, cell remains intact. Examples: eccrine sweat glands, salivary glands, pancreatic acini.'},
+  {term:'Holocrine Secretion',def:'Cell accumulates secretory product, then dies and ruptures to release it. The entire cell = the secretion. Example: sebaceous (oil) glands.'},
+  {term:'Goblet Cell',def:'Unicellular exocrine gland shaped like a goblet/wine glass. Secretes mucin → mucin + H₂O = mucus. Found in respiratory and GI tract epithelia.'},
+  {term:'Mesenchyme',def:'Embryonic connective tissue from mesoderm. The common ancestor of ALL adult connective tissue types.'},
+  {term:'ECM (Extracellular Matrix)',def:'Ground substance + Fibers. The non-cellular material that surrounds CT cells. Provides structural support, mechanical strength, and a medium for cell communication.'},
+  {term:'Ground Substance',def:'Gelatinous material filling space between CT cells and fibers. Contains water, ions, nutrients, glycosaminoglycans (GAGs), and proteoglycans. Consistency ranges from fluid (blood) to solid (bone).'},
+  {term:'Fibroblast',def:'Most abundant CT cell. Produces and maintains all ECM components (collagen, elastic, reticular fibers + ground substance). Mature resting form = fibrocyte.'},
+  {term:'Mast Cell',def:'CT cell with large granules containing histamine (triggers inflammation/allergic responses) and heparin (prevents blood clotting). Found near blood vessels in loose CT.'},
+  {term:'Macrophage',def:'Large phagocytic CT cell derived from monocytes (WBCs). "Big eater" — engulfs pathogens, dead cells, cellular debris. Critical for immune surveillance.'},
+  {term:'Collagen Fibers',def:'Most abundant fiber in CT. Extremely high tensile strength (resists pulling). Flexible but nearly inextensible. Examples: tendons, ligaments, dermis. Produced by fibroblasts.'},
+  {term:'Elastic Fibers',def:'Made of elastin protein. Can stretch up to 150% and recoil back. Found where flexibility needed: lungs, large arteries, vocal cords, ligamentum nuchae.'},
+  {term:'Reticular Fibers',def:'Thin, delicate collagen type III fibers. Form networks (stroma = supporting framework) of soft organs: liver, spleen, lymph nodes, bone marrow.'},
+  {term:'Loose CT Types (3)',def:'1. Areolar — most widely distributed, all fiber/cell types; "packing material." 2. Adipose — dominated by adipocytes; energy storage/insulation/cushion. 3. Reticular — reticular fibers; framework of lymphoid organs.'},
+  {term:'Dense Regular CT',def:'Parallel bundles of collagen fibers. Resists tension in ONE direction. Examples: tendons (muscle→bone) and ligaments (bone→bone).'},
+  {term:'Dense Irregular CT',def:'Random, multi-directional collagen fiber arrangement. Resists stress from all directions. Examples: dermis of skin, joint capsules, organ capsules.'},
+  {term:'Hyaline Cartilage',def:'Most common cartilage. Glassy appearance, fine type II collagen. Articular surfaces, costal cartilages (ribs→sternum), nose, trachea rings, larynx, and fetal skeleton.'},
+  {term:'Elastic Cartilage',def:'Contains elastic fibers → flexible and springy. External ear (pinna), epiglottis, auditory tube. More flexible than hyaline; maintains shape.'},
+  {term:'Fibrocartilage',def:'Thick type I collagen bundles + cartilage matrix. Strongest cartilage — resists compression AND tension. Intervertebral discs, knee menisci (shock absorbers), pubic symphysis.'},
+  {term:'Neuron Components',def:'Cell body (soma): metabolic center, contains Nissl bodies (rough ER). Dendrites: receive signals. Axon: sends signals away from cell body. Terminal boutons: release neurotransmitters.'},
+],
+integumentary: [
+  {term:'Epidermis Overview',def:'Outermost skin layer. Stratified keratinized squamous epithelium. AVASCULAR but innervated. 4 cell types: keratinocytes (90%), melanocytes, dendritic/Langerhans cells, tactile/Merkel cells.'},
+  {term:'Thick vs Thin Skin',def:'Thick skin: palms and soles — has all 5 layers including stratum lucidum, no hair follicles. Thin skin: rest of body — lacks stratum lucidum, has hair follicles and sebaceous glands.'},
+  {term:'Epidermis Layers (deep→superficial)',def:'"Baby Spits Grapes and Corn" → Basale → Spinosum → Granulosum → (Lucidum, thick skin only) → Corneum'},
+  {term:'Stratum Basale',def:'Deepest layer. Contains stem cells (mitotically active keratinocytes) that continuously divide. Also contains melanocytes and Merkel (tactile epithelial) cells. Anchored to basement membrane.'},
+  {term:'Stratum Spinosum',def:'"Spiny layer" — cells have cytoplasmic extensions connected by desmosomes (look spiny in microscopy). Contains dendritic (Langerhans) cells — immune surveillance.'},
+  {term:'Stratum Granulosum',def:'"Granular layer" — cells actively make keratohyalin granules (precursors to keratin) and lamellar granules (lipid-rich, waterproof the skin). Cells begin to die here.'},
+  {term:'Stratum Lucidum',def:'"Clear layer" — thin, translucent. ONLY in thick skin (palms, soles). Located between granulosum and corneum. Cells are dead and closely compacted.'},
+  {term:'Stratum Corneum',def:'"Horny layer" — outermost. 20–30 layers of dead, flat, keratin-filled cells (corneocytes). Continuously shed (desquamation). Creates the waterproof, abrasion-resistant barrier.'},
+  {term:'Keratinocytes',def:'Most abundant epidermal cell (90%). Job: produce keratin (tough structural protein). Born in basale, travel up, die in corneum. Full journey takes ~4 weeks.'},
+  {term:'Melanocytes & Melanin',def:'Melanocytes in stratum basale produce melanin in melanosomes → transferred to keratinocytes → caps nucleus like umbrella → protects DNA from UV radiation damage.'},
+  {term:'Dendritic Cells (Langerhans)',def:'Macrophage-like immune cells in stratum spinosum. Detect, engulf, and present antigens to T-cells. Part of immune defense against pathogens entering through skin.'},
+  {term:'Tactile/Merkel Cells',def:'In stratum basale. Associate with flattened nerve endings to form Merkel discs. Detect SUSTAINED, FINE touch (texture recognition, shape detection).'},
+  {term:'Dermis – Two Layers',def:'1. Papillary dermis (superficial) — loose CT, dermal papillae, Meissner\'s corpuscles, capillaries, dermal ridges. 2. Reticular dermis (deep) — dense irregular CT, cleavage lines, dermal vascular plexus.'},
+  {term:'Dermal Papillae & Fingerprints',def:'Dermal papillae (projections of papillary dermis) → create dermal ridges → push up epidermis → epidermal ridges → visible as friction ridges (fingerprints). Unique to each individual.'},
+  {term:"Meissner's Corpuscles",def:'Encapsulated mechanoreceptors in dermal papillae. Detect LIGHT TOUCH, fine texture, slow vibrations. Most concentrated in fingertips and lips. Adapt quickly (respond to onset/offset).'},
+  {term:'Lamellar / Pacinian Corpuscles',def:'Large, onion-shaped encapsulated receptors deep in reticular dermis/hypodermis. Detect DEEP PRESSURE and high-frequency vibrations. Adapt rapidly.'},
+  {term:'Eccrine Sweat Glands',def:'True/common sweat glands. Distributed over entire body. Function: thermoregulation (cooling by evaporation). Secretion: watery sweat. Method: MEROCRINE. Open via pore directly on skin surface.'},
+  {term:'Apocrine Sweat Glands',def:'Found in axilla (armpit), anogenital region, areolae. Open into HAIR FOLLICLES. Secretion: viscous, protein-rich (body odor from bacterial action). Method: MEROCRINE (despite the name). Active at puberty.'},
+  {term:'Sebaceous Glands',def:'Oil glands. Produce SEBUM (lubricates skin/hair, antimicrobial, slows water loss). Secretion: HOLOCRINE (cell dies). Mostly outgrowths of hair follicles. Arrector pili contraction squeezes gland → releases sebum.'},
+  {term:'Arrector Pili',def:'Small smooth muscle attached to hair follicle. Involuntary. Contraction → erects hair (goosebumps) + compresses attached sebaceous gland → pushes sebum onto skin.'},
+  {term:'Hair Shaft Layers',def:'Inside→Outside: Medulla (soft core) → Cortex (contains melanin/color) → Cuticle (outer scales, protect hair).'},
+  {term:'Hair Follicle Components',def:'Hair bulb (base), hair matrix (dividing cells), dermal papilla (vascular nub feeds matrix), hair follicle receptor (detects movement), epithelial root sheath, glassy membrane, peripheral CT sheath, hair bulge (stem cells).'},
+  {term:'Nail Anatomy',def:'Nail plate (visible hard part), nail matrix (growth zone under proximal fold), root (buried under fold), lunule (white crescent = visible matrix edge), eponychium/cuticle (seals proximal fold), hyponychium (under free edge).'},
+  {term:'Rule of Nines',def:'Estimates % body surface area burned. Head=9%, each arm=9%, front trunk=18%, back trunk=18%, each leg=18%, perineum=1% = 100% total.'},
+  {term:'Burn Degrees',def:'1st: epidermis only (red, painful). 2nd: epidermis + partial dermis (blisters, very painful). 3rd: full thickness, epidermis + all dermis (painless center, nerve endings destroyed, needs skin graft).'},
+]};
+FC.mixed = [...FC.tissues, ...FC.integumentary];
+
+// =====================================================
+// STATE
+// =====================================================
+let state = {
+  tab:'home',
+  quiz:{questions:[],current:0,score:0,answered:false,answers:[],topic:'mixed'},
+  fc:{cards:[],idx:0,flipped:false},
+  stats:JSON.parse(localStorage.getItem('sb2_stats')||'{"total":0,"correct":0,"streak":0,"wrong":{}}'),
+  chat:[]
+};
+let selectedAnswer = null;
+
+// =====================================================
+// TABS
+// =====================================================
+function switchTab(t){
+  state.tab=t;
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('sec-'+t).classList.add('active');
+  document.querySelectorAll('.tab-btn').forEach(b=>{if(b.onclick&&b.onclick.toString().includes("'"+t+"'"))b.classList.add('active');});
+  if(t==='flashcards')loadFlashcards();
+  if(t==='stats')updateStats();
+}
+
+// =====================================================
+// QUIZ
+// =====================================================
+function getQuestions(topic, types){
+  let pool = topic==='mixed'?[...QS.tissues,...QS.integumentary]:([...QS[topic]||[]]);
+  pool = pool.filter(q=>types[q.type]);
+  return pool.sort(()=>Math.random()-.5).slice(0,20);
+}
+function startQuiz(topic){
+  document.getElementById('quiz-topic-sel').value=topic==='mixed'?'mixed':topic;
+  switchTab('quiz');
+  setTimeout(beginQuiz,50);
+}
+function showSetup(){
+  document.getElementById('quiz-setup').style.display='block';
+  document.getElementById('quiz-area').style.display='none';
+  document.getElementById('quiz-results').style.display='none';
+}
+function beginQuiz(){
+  const topic=document.getElementById('quiz-topic-sel').value;
+  const types={mc:document.getElementById('q-mc').checked,tf:document.getElementById('q-tf').checked,fill:document.getElementById('q-fill').checked};
+  if(!types.mc&&!types.tf&&!types.fill){showToast('Select at least one question type!');return;}
+  const qs=getQuestions(topic,types);
+  if(!qs.length){showToast('No questions match your filters');return;}
+  state.quiz={questions:qs,current:0,score:0,answered:false,answers:[],topic};
+  document.getElementById('quiz-setup').style.display='none';
+  document.getElementById('quiz-area').style.display='block';
+  document.getElementById('quiz-results').style.display='none';
+  document.getElementById('quiz-topic-label').textContent=topic.toUpperCase().replace('TISSUES','TISSUES & HISTOLOGY').replace('INTEGUMENTARY','INTEGUMENTARY SYSTEM').replace('MIXED','MIXED — ALL TOPICS')+' QUIZ';
+  renderQuestion();
+}
+function renderQuestion(){
+  const {questions,current,score}=state.quiz;
+  const q=questions[current];
+  selectedAnswer=null;
+  document.getElementById('q-counter').textContent=`Question ${current+1} of ${questions.length}`;
+  document.getElementById('score-display').textContent=`Score: ${score}`;
+  document.getElementById('q-progress').style.width=`${(current/questions.length)*100}%`;
+  document.getElementById('q-type-label').textContent={mc:'Multiple Choice',tf:'True or False',fill:'Fill in the Blank'}[q.type];
+  document.getElementById('q-text').textContent=q.q;
+  const fb=document.getElementById('q-feedback');
+  fb.style.display='none';fb.className='feedback';
+  document.getElementById('ai-explain-btn').style.display='none';
+  document.getElementById('ai-explain-box').style.display='none';
+  document.getElementById('btn-next').disabled=true;
+  document.getElementById('btn-submit').disabled=false;
+  state.quiz.answered=false;
+  const body=document.getElementById('q-body');
+  if(q.type==='mc'){
+    body.innerHTML='<div class="options">'+q.opts.map((o,i)=>`<button class="option" onclick="selectOption(${i})" id="opt-${i}">${String.fromCharCode(65+i)}) ${o}</button>`).join('')+'</div>';
+  }else if(q.type==='tf'){
+    body.innerHTML=`<div class="tf-row"><button class="tf-btn" onclick="selectTF(true)" id="tf-true">✅ True</button><button class="tf-btn" onclick="selectTF(false)" id="tf-false">❌ False</button></div>`;
+  }else{
+    body.innerHTML=`<input class="fill-input" id="fill-ans" placeholder="Type your answer here..." onkeydown="if(event.key==='Enter')submitAnswer()">`;
+    setTimeout(()=>document.getElementById('fill-ans')?.focus(),100);
+  }
+}
+function selectOption(i){
+  if(state.quiz.answered)return;
+  selectedAnswer=i;
+  document.querySelectorAll('.option').forEach((o,j)=>{
+    o.style.borderColor=j===i?'var(--accent)':'';
+    o.style.background=j===i?'rgba(126,184,247,0.08)':'';
+  });
+}
+function selectTF(val){
+  if(state.quiz.answered)return;
+  selectedAnswer=val;
+  document.getElementById('tf-true').style.borderColor=val?'var(--accent)':'';
+  document.getElementById('tf-false').style.borderColor=!val?'var(--accent)':'';
+}
+function submitAnswer(){
+  if(state.quiz.answered)return;
+  const q=state.quiz.questions[state.quiz.current];
+  let correct=false;
+  if(q.type==='mc'){
+    if(selectedAnswer===null){showToast('Select an answer first!');return;}
+    correct=selectedAnswer===q.a;
+    document.querySelectorAll('.option').forEach((o,i)=>{
+      o.disabled=true;
+      if(i===q.a)o.classList.add('reveal-correct');
+      else if(i===selectedAnswer&&!correct)o.classList.add('wrong');
+    });
+  }else if(q.type==='tf'){
+    if(selectedAnswer===null){showToast('Select True or False!');return;}
+    correct=selectedAnswer===q.a;
+    ['true','false'].forEach(v=>{
+      const btn=document.getElementById('tf-'+v);btn.disabled=true;
+      const bval=v==='true';
+      if(bval===q.a)btn.classList.add('correct');
+      else if(bval===selectedAnswer&&!correct)btn.classList.add('wrong');
+    });
+  }else{
+    const inp=document.getElementById('fill-ans');
+    const userAns=inp.value.trim().toLowerCase().replace(/[^a-z0-9\s]/g,'');
+    const validAns=[q.a.toLowerCase(),...(q.alt||[]).map(a=>a.toLowerCase())];
+    correct=validAns.some(va=>{const c=va.replace(/[^a-z0-9\s]/g,'');return userAns.includes(c)||c.includes(userAns)&&userAns.length>=3;});
+    inp.classList.add(correct?'correct':'wrong');inp.disabled=true;
+    if(!correct)inp.parentElement.insertAdjacentHTML('afterend',`<div style="font-size:13px;color:var(--muted);margin-top:8px;">Correct answer: <strong style="color:var(--correct)">${q.a}</strong></div>`);
+  }
+  const fb=document.getElementById('q-feedback');
+  fb.className='feedback '+(correct?'correct':'wrong');
+  fb.innerHTML=(correct?'✅ Correct! ':'❌ Not quite. ')+q.exp;
+  fb.style.display='block';
+  state.quiz.answered=true;
+  state.quiz.answers.push(correct);
+  if(correct)state.quiz.score++;
+  selectedAnswer=null;
+  document.getElementById('btn-submit').disabled=true;
+  document.getElementById('btn-next').disabled=false;
+  document.getElementById('ai-explain-btn').style.display='flex';
+  updateGlobalStats(correct,q);
+}
+function nextQuestion(){
+  state.quiz.current++;
+  if(state.quiz.current>=state.quiz.questions.length)showResults();
+  else renderQuestion();
+}
+function endQuiz(){if(state.quiz.current>0)showResults();else showSetup();}
+function showResults(){
+  document.getElementById('quiz-area').style.display='none';
+  document.getElementById('quiz-results').style.display='block';
+  const {score,answers,questions}=state.quiz;
+  const total=answers.length;const pct=total?Math.round(score/total*100):0;
+  document.getElementById('final-score').textContent=score;
+  document.getElementById('total-qs').textContent=total;
+  const [title,msg]=pct>=90?['Crushing It! 🔥','You are SO ready for this exam.']:pct>=75?['Great Work! 💪','Keep reviewing your weak spots and you\'ll ace it.']:pct>=60?['Getting There! 📚','Review the answers you missed and try again.']:['Keep Going! 💡','Review the material and keep at it — you\'ve got this!'];
+  document.getElementById('result-title').textContent=title;
+  document.getElementById('result-msg').textContent=`${pct}% accuracy (${score}/${total}) — ${msg}`;
+  const wrong=questions.filter((q,i)=>!answers[i]);
+  if(wrong.length)document.getElementById('result-breakdown').innerHTML=`<div style="font-size:13px;font-weight:600;margin-bottom:10px;color:var(--muted);">Review these questions:</div>`+wrong.slice(0,5).map(q=>`<div style="font-size:12px;padding:10px;background:var(--surface2);border-radius:8px;margin-bottom:6px;line-height:1.5;">${q.q}<br><span style="color:var(--muted);font-size:11px;">Answer: ${q.type==='mc'?q.opts[q.a]:q.a}</span></div>`).join('');
+  document.getElementById('q-progress').style.width='100%';
+}
+
+// =====================================================
+// AI EXPLAIN
+// =====================================================
+async function aiExplain(){
+  const q=state.quiz.questions[state.quiz.current];
+  const box=document.getElementById('ai-explain-box');
+  const txt=document.getElementById('ai-explain-text');
+  box.style.display='block';
+  txt.innerHTML='<div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
+  document.getElementById('ai-explain-btn').style.display='none';
+  try{
+    const ans=q.type==='mc'?q.opts[q.a]:String(q.a);
+    const prompt=`${CTX}\n\nFor this anatomy question, give a clear 2-3 sentence explanation of WHY the answer is correct. Add a memory trick or mnemonic if helpful. Be friendly and encouraging.\n\nQuestion: "${q.q}"\nCorrect answer: "${ans}"`;
+    const resp=await puter.ai.chat(prompt,{model:'gemini-2.0-flash'});
+    txt.textContent=resp?.message?.content?.[0]?.text||resp?.toString()||'Could not get AI explanation.';
+  }catch(e){txt.textContent=q.exp||'Could not load AI explanation. Check your internet connection.';}
+}
+
+// =====================================================
+// AI QUIZ GENERATOR
+// =====================================================
+async function startAIQuiz(){
+  switchTab('quiz');
+  document.getElementById('quiz-setup').style.display='none';
+  document.getElementById('quiz-area').style.display='block';
+  document.getElementById('quiz-results').style.display='none';
+  document.getElementById('quiz-topic-label').textContent='AI-GENERATED QUIZ';
+  document.getElementById('q-counter').textContent='Generating with Gemini Flash...';
+  document.getElementById('q-progress').style.width='5%';
+  document.getElementById('q-type-label').textContent='AI QUIZ';
+  document.getElementById('q-text').textContent='Gemini Flash is writing fresh exam questions for you...';
+  document.getElementById('q-body').innerHTML='<div class="typing" style="justify-content:center;padding:24px;"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
+  document.getElementById('q-feedback').style.display='none';
+  document.getElementById('ai-explain-btn').style.display='none';
+  document.getElementById('btn-submit').disabled=true;
+  document.getElementById('btn-next').disabled=true;
+  try{
+    const prompt=`${CTX}\n\nCreate 10 high-quality quiz questions about tissues, histology, and the integumentary system for an anatomy & physiology student. Mix multiple choice, true/false, and fill-in-the-blank types. Questions should test conceptual understanding and key facts.\n\nReturn ONLY a valid JSON array with no markdown, no backticks, no explanation — just the raw JSON array:\n[\n  {"type":"mc","q":"Question?","opts":["A","B","C","D"],"a":0,"exp":"Brief explanation of why the answer is correct."},\n  {"type":"tf","q":"Statement that is true or false.","a":true,"exp":"Brief explanation."},\n  {"type":"fill","q":"The ___ is responsible for X.","a":"answer word(s)","exp":"Brief explanation."}\n]\nFor mc: a = index of correct option (0, 1, 2, or 3). For tf: a = true or false. For fill: a = the answer. Make all questions clear and exam-appropriate.`;
+    const resp=await puter.ai.chat(prompt,{model:'gemini-2.0-flash'});
+    let raw=(resp?.message?.content?.[0]?.text||resp?.toString()||'').replace(/```json|```/g,'').trim();
+    const start=raw.indexOf('[');const end=raw.lastIndexOf(']');
+    if(start!==-1&&end!==-1)raw=raw.substring(start,end+1);
+    const qs=JSON.parse(raw);
+    if(!qs.length)throw new Error('Empty');
+    state.quiz={questions:qs,current:0,score:0,answered:false,answers:[],topic:'ai'};
+    renderQuestion();
+    showToast('✨ AI generated '+qs.length+' fresh questions!');
+  }catch(e){
+    showToast('AI failed, using question bank...');
+    setTimeout(()=>startQuiz('mixed'),1500);
+  }
+}
+
+// =====================================================
+// FLASHCARDS
+// =====================================================
+function loadFlashcards(){
+  const topic=document.getElementById('fc-topic').value;
+  state.fc.cards=[...FC[topic]||FC.mixed];
+  state.fc.idx=0;state.fc.flipped=false;
+  renderCard();
+}
+function renderCard(){
+  const {cards,idx}=state.fc;
+  if(!cards.length)return;
+  const c=cards[idx];
+  document.getElementById('fc-term').textContent=c.term;
+  document.getElementById('fc-def').textContent=c.def;
+  document.getElementById('fc-count').textContent=`${idx+1} / ${cards.length}`;
+  state.fc.flipped=false;
+  document.getElementById('flashcard').classList.remove('flipped');
+}
+function flipCard(){state.fc.flipped=!state.fc.flipped;document.getElementById('flashcard').classList.toggle('flipped',state.fc.flipped);}
+function nextCard(){state.fc.idx=(state.fc.idx+1)%state.fc.cards.length;renderCard();}
+function prevCard(){state.fc.idx=(state.fc.idx-1+state.fc.cards.length)%state.fc.cards.length;renderCard();}
+function shuffleCards(){state.fc.cards=state.fc.cards.sort(()=>Math.random()-.5);state.fc.idx=0;renderCard();showToast('🔀 Shuffled!');}
+async function aiGenCards(){
+  const status=document.getElementById('fc-ai-status');
+  status.style.display='block';
+  status.innerHTML='<span class="spinner"></span> Generating new flashcards with Gemini Flash...';
+  try{
+    const topic=document.getElementById('fc-topic').value;
+    const topicName=topic==='integumentary'?'the integumentary system':topic==='tissues'?'tissues and histology':'anatomy and physiology tissues and integumentary system';
+    const prompt=`${CTX}\n\nCreate 8 flashcard term-definition pairs about ${topicName}. Return ONLY a valid JSON array (no markdown, no backticks):\n[{"term":"Term or concept","def":"Clear definition or explanation in 1-3 sentences. Include examples where helpful."}]`;
+    const resp=await puter.ai.chat(prompt,{model:'gemini-2.0-flash'});
+    let raw=(resp?.message?.content?.[0]?.text||resp?.toString()||'').replace(/```json|```/g,'').trim();
+    const s=raw.indexOf('[');const e=raw.lastIndexOf(']');
+    if(s!==-1&&e!==-1)raw=raw.substring(s,e+1);
+    const newCards=JSON.parse(raw);
+    state.fc.cards=[...state.fc.cards,...newCards];
+    status.textContent=`✅ Added ${newCards.length} AI cards! Now at ${state.fc.cards.length} total.`;
+  }catch(e){status.textContent='❌ Could not generate cards. Try again.';}
+  setTimeout(()=>status.style.display='none',4000);
+}
+document.addEventListener('keydown',e=>{
+  if(state.tab==='flashcards'){
+    if(e.key==='ArrowRight')nextCard();
+    if(e.key==='ArrowLeft')prevCard();
+    if(e.key===' '){e.preventDefault();flipCard();}
+  }
+});
+
+// =====================================================
+// AI CHAT
+// =====================================================
+async function sendChat(){
+  const inp=document.getElementById('chat-input');
+  const msg=inp.value.trim();if(!msg)return;
+  inp.value='';
+  appendMsg('user',msg);
+  state.chat.push({role:'user',content:msg});
+  const loadId=appendMsg('ai',null,true);
+  try{
+    const history=state.chat.slice(-8).map(m=>`${m.role==='user'?'Student':'Tutor'}: ${m.content}`).join('\n');
+    const prompt=`${CTX}\n\nConversation history:\n${history}\n\nStudent's latest message: "${msg}"\n\nRespond as a helpful, encouraging anatomy tutor. Be concise but thorough. Use bullet points or numbered lists when listing multiple items. If giving a quiz question, include the correct answer at the end.`;
+    const resp=await puter.ai.chat(prompt,{model:'gemini-2.0-flash'});
+    const text=resp?.message?.content?.[0]?.text||resp?.toString()||'Sorry, I had trouble responding.';
+    updateMsg(loadId,text);
+    state.chat.push({role:'assistant',content:text});
+  }catch(e){updateMsg(loadId,'Network error — make sure you\'re online and puter.js loaded. Try refreshing the page.');}
+}
+function sendChip(msg){document.getElementById('chat-input').value=msg;sendChat();}
+function appendMsg(role,text,loading=false){
+  const c=document.getElementById('chat-container');
+  const id='msg-'+Date.now()+Math.random();
+  const div=document.createElement('div');
+  div.className='msg '+role;div.id=id;
+  if(role==='ai')div.innerHTML='<div class="msg-label">GEMINI FLASH</div>';
+  if(loading)div.innerHTML+='<div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
+  else div.innerHTML+=(text||'').replace(/\n/g,'<br>');
+  c.appendChild(div);c.scrollTop=c.scrollHeight;
+  return id;
+}
+function updateMsg(id,text){
+  const el=document.getElementById(id);
+  if(el)el.innerHTML='<div class="msg-label">GEMINI FLASH</div>'+text.replace(/\n/g,'<br>');
+  document.getElementById('chat-container').scrollTop=99999;
+}
+
+// =====================================================
+// STATS
+// =====================================================
+function updateGlobalStats(correct,q){
+  const s=state.stats;
+  s.total++;
+  if(correct){s.correct++;s.streak++;}
+  else{s.streak=0;const k=q.q.substring(0,50);s.wrong[k]=(s.wrong[k]||0)+1;}
+  localStorage.setItem('sb2_stats',JSON.stringify(s));
+}
+function updateStats(){
+  const s=state.stats;
+  document.getElementById('st-total').textContent=s.total;
+  document.getElementById('st-correct').textContent=s.correct;
+  document.getElementById('st-pct').textContent=s.total?Math.round(s.correct/s.total*100)+'%':'—';
+  document.getElementById('st-streak').textContent=s.streak;
+  const wa=Object.entries(s.wrong).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  document.getElementById('weak-areas').innerHTML=wa.length?wa.map(([t,c])=>`<div style="padding:10px;background:var(--surface);border-radius:8px;margin-bottom:6px;font-size:13px;line-height:1.5;"><span style="color:var(--wrong);font-weight:600;">✗ ${c}x</span> ${t}...</div>`).join(''):'<span style="color:var(--muted)">No weak areas yet — complete some quizzes!</span>';
+}
+function resetStats(){if(confirm('Reset all your stats?')){state.stats={total:0,correct:0,streak:0,wrong:{}};localStorage.removeItem('sb2_stats');updateStats();showToast('Stats reset!');}}
+
+// =====================================================
+// TOAST
+// =====================================================
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// =====================================================
+// INIT
+// =====================================================
+loadFlashcards();
+</script>
+</body>
+</html>
