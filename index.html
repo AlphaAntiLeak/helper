@@ -1156,6 +1156,222 @@ const PHOTO_QS = [
 ];
 
 
+// ══════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════
+let ST = {
+  quiz: {questions:[], cur:0, score:0, answered:false, topic:'mixed'},
+  photo: {questions:[], cur:0, score:0, answered:false},
+  fc: {cards:[], idx:0, flipped:false},
+  timer: {mode:90, running:false, elapsed:0, station:1, interval:null},
+  stats: {total:0, correct:0, streak:0, wrong:{}, photo:0, labels:0},
+  label: {diagram:null, selected:null, correct:0, attempts:0}
+};
+function loadStats(){try{const s=localStorage.getItem('luda_stats_v2');if(s)ST.stats=JSON.parse(s);}catch(e){}}
+function saveStats(){try{localStorage.setItem('luda_stats_v2',JSON.stringify(ST.stats));}catch(e){}}
+loadStats();
+
+// ══════════════════════════════════════════════════════════
+// TABS
+// ══════════════════════════════════════════════════════════
+function switchTab(id){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  const sec=document.getElementById('sec-'+id);
+  if(sec)sec.classList.add('active');
+  const btns=document.querySelectorAll('.tab-btn');
+  btns.forEach(b=>{if(b.onclick&&b.onclick.toString().includes("'"+id+"'"))b.classList.add('active');});
+  if(id==='notes'&&!notesRendered)renderNotes();
+  if(id==='stats')renderStats();
+  if(id==='photo')showPhotoGallery();
+}
+
+// ══════════════════════════════════════════════════════════
+// QUIZ ENGINE
+// ══════════════════════════════════════════════════════════
+const LUDA_MSGS_CORRECT=[
+  'Yesss Luda!! 🔥','You know your stuff!!','BONE QUEEN 👑','Absolutely killing it!',
+  'That\'s my girl! 💪','Correct!! Let\'s GOOO 🎉','Anatomy queen behavior 💅',
+  'Luda 1, Exam 0 😤','Periodt! You got it!','Slay!! 🦴✨'
+];
+const LUDA_MSGS_WRONG=[
+  'So close! You\'ve got this 💕','Read the explanation — you\'ll nail it next time!',
+  'Tricky one! Now you know 🧠','That\'s what studying is for! Keep going 💪',
+  'Every wrong answer = one step closer to passing! 🌟','This is how we learn babe!',
+  'Shake it off and keep going! 🎵','Note this one — it might show up again! 📝'
+];
+
+function startQuiz(topic){
+  switchTab('quiz');
+  document.getElementById('qz-topic').value=topic;
+  beginQuiz();
+}
+function showSetup(){
+  document.getElementById('quiz-setup').style.display='block';
+  document.getElementById('quiz-area').style.display='none';
+  document.getElementById('quiz-results').style.display='none';
+}
+function beginQuiz(){
+  const topic=document.getElementById('qz-topic').value;
+  const useMC=document.getElementById('qz-mc').checked;
+  const useTF=document.getElementById('qz-tf').checked;
+  const useFill=document.getElementById('qz-fill').checked;
+  let pool=[...(QS[topic]||QS.mixed)];
+  if(!useMC)pool=pool.filter(q=>q.type!=='mc');
+  if(!useTF)pool=pool.filter(q=>q.type!=='tf');
+  if(!useFill)pool=pool.filter(q=>q.type!=='fill');
+  if(!pool.length){toast('No questions match filters!');return;}
+  pool=pool.sort(()=>Math.random()-0.5).slice(0,Math.min(50,pool.length));
+  ST.quiz={questions:pool,cur:0,score:0,answered:false,topic};
+  document.getElementById('quiz-setup').style.display='none';
+  document.getElementById('quiz-area').style.display='block';
+  document.getElementById('quiz-results').style.display='none';
+  document.getElementById('qz-topic-lbl').textContent=topic.toUpperCase()+' QUIZ';
+  showQuestion();
+}
+function showQuestion(){
+  const q=ST.quiz.questions[ST.quiz.cur];
+  if(!q){endQuiz();return;}
+  ST.quiz.answered=false;
+  const total=ST.quiz.questions.length;
+  const cur=ST.quiz.cur;
+  document.getElementById('qz-counter').textContent=`Question ${cur+1} of ${total}`;
+  document.getElementById('qz-score').textContent=`Score: ${ST.quiz.score}`;
+  document.getElementById('qz-prog').style.width=((cur/total)*100)+'%';
+  document.getElementById('qz-type-lbl').textContent=q.type==='mc'?'MULTIPLE CHOICE':q.type==='tf'?'TRUE / FALSE':'FILL IN THE BLANK';
+  document.getElementById('qz-text').textContent=q.q;
+  document.getElementById('qz-fb').style.display='none';
+  document.getElementById('qz-fb').className='feedback';
+  document.getElementById('qz-ai-btn').style.display='none';
+  document.getElementById('qz-ai-box').style.display='none';
+  document.getElementById('qz-img-wrap').style.display='none';
+  document.getElementById('qz-submit').disabled=false;
+  document.getElementById('qz-next').disabled=true;
+  const body=document.getElementById('qz-body');
+  if(q.type==='mc'){
+    body.innerHTML='<div class="options">'+q.opts.map((o,i)=>`<button class="option" onclick="selectOption(${i})">${o}</button>`).join('')+'</div>';
+  } else if(q.type==='tf'){
+    body.innerHTML=`<div class="tf-row"><button class="tf-btn" onclick="selectTF(true)">TRUE</button><button class="tf-btn" onclick="selectTF(false)">FALSE</button></div>`;
+  } else {
+    body.innerHTML=`<input class="fill-input" id="fill-ans" type="text" placeholder="Type your answer..." onkeydown="if(event.key==='Enter')submitAnswer()">`;
+    setTimeout(()=>{const el=document.getElementById('fill-ans');if(el)el.focus();},50);
+  }
+}
+let selectedOpt=null, selectedTF=null;
+function selectOption(i){
+  if(ST.quiz.answered)return;
+  selectedOpt=i;
+  document.querySelectorAll('.option').forEach((b,idx)=>{
+    b.classList.toggle('selected',idx===i);
+    if(idx===i)b.style.borderColor='var(--accent)';
+    else b.style.borderColor='';
+  });
+}
+function selectTF(val){
+  if(ST.quiz.answered)return;
+  selectedTF=val;
+  document.querySelectorAll('.tf-btn').forEach(b=>{
+    b.style.borderColor=b.textContent==='TRUE'?(val?'var(--accent)':''):(val?'':'var(--accent)');
+  });
+}
+function submitAnswer(){
+  const q=ST.quiz.questions[ST.quiz.cur];
+  if(ST.quiz.answered)return;
+  let correct=false;
+  if(q.type==='mc'){
+    if(selectedOpt===null){toast('Pick an answer first!');return;}
+    correct=selectedOpt===q.a;
+    document.querySelectorAll('.option').forEach((b,i)=>{
+      b.disabled=true;
+      if(i===q.a)b.classList.add('correct');
+      else if(i===selectedOpt&&!correct)b.classList.add('wrong');
+    });
+    selectedOpt=null;
+  } else if(q.type==='tf'){
+    if(selectedTF===null){toast('Pick True or False!');return;}
+    correct=selectedTF===q.a;
+    document.querySelectorAll('.tf-btn').forEach(b=>{
+      b.disabled=true;
+      const isTrue=b.textContent==='TRUE';
+      if(isTrue===q.a)b.classList.add('correct');
+      else if(isTrue===selectedTF&&!correct)b.classList.add('wrong');
+    });
+    selectedTF=null;
+  } else {
+    const inp=document.getElementById('fill-ans');
+    if(!inp||!inp.value.trim()){toast('Type an answer first!');return;}
+    const ans=inp.value.trim().toLowerCase();
+    const expect=String(q.a).toLowerCase();
+    correct=ans===expect||expect.split(/[;,\/]/).map(s=>s.trim()).some(s=>ans===s||ans.includes(s)||s.includes(ans));
+    inp.disabled=true;
+    inp.classList.add(correct?'correct':'wrong');
+  }
+  ST.quiz.answered=true;
+  if(correct){ST.quiz.score++;ST.stats.correct++;ST.stats.streak++;}
+  else{ST.stats.streak=0;if(q.q)ST.stats.wrong[q.q.slice(0,40)]=(ST.stats.wrong[q.q.slice(0,40)]||0)+1;}
+  ST.stats.total++;
+  saveStats();
+  const fb=document.getElementById('qz-fb');
+  const msg=correct?LUDA_MSGS_CORRECT[Math.floor(Math.random()*LUDA_MSGS_CORRECT.length)]:LUDA_MSGS_WRONG[Math.floor(Math.random()*LUDA_MSGS_WRONG.length)];
+  fb.className='feedback '+(correct?'correct':'wrong');
+  fb.innerHTML=`<strong>${msg}</strong><br>${q.exp}`;
+  fb.style.display='block';
+  document.getElementById('qz-score').textContent=`Score: ${ST.quiz.score}`;
+  document.getElementById('qz-ai-btn').style.display='flex';
+  document.getElementById('qz-submit').disabled=true;
+  document.getElementById('qz-next').disabled=false;
+}
+function nextQuestion(){
+  ST.quiz.cur++;
+  if(ST.quiz.cur>=ST.quiz.questions.length){endQuiz();return;}
+  showQuestion();
+}
+function endQuiz(){
+  document.getElementById('quiz-area').style.display='none';
+  document.getElementById('quiz-results').style.display='block';
+  const score=ST.quiz.score, total=ST.quiz.questions.length;
+  const pct=Math.round((score/total)*100);
+  document.getElementById('res-score').textContent=score;
+  document.getElementById('res-total').textContent=total;
+  const title=pct>=90?'BONE QUEEN 👑':pct>=70?'Almost there Luda! 💪':pct>=50?'Keep pushing! 📚':'Let\'s review and retry! 💕';
+  document.getElementById('res-title').textContent=title;
+  document.getElementById('res-msg').textContent=`${pct}% — ${pct>=70?'You\'ve got this exam!':'Review the notes and try again!'}`;
+  renderStats();
+}
+async function aiExplain(){
+  const q=ST.quiz.questions[ST.quiz.cur];
+  if(!q)return;
+  const box=document.getElementById('qz-ai-box');
+  const txt=document.getElementById('qz-ai-text');
+  box.style.display='block';
+  txt.textContent='Thinking...';
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:400,messages:[{role:'user',content:`Explain this anatomy question in 2-3 sentences for a student named Luda who is studying for her skeletal system exam. Be encouraging and clear.\n\nQuestion: ${q.q}\nCorrect answer: ${q.opts?q.opts[q.a]:q.a}\nExplanation: ${q.exp}`}]})});
+    const d=await r.json();
+    txt.textContent=d.content?.[0]?.text||'No response.';
+  }catch(e){txt.textContent='AI unavailable right now.';}
+}
+async function startAIQuiz(){
+  switchTab('quiz');
+  document.getElementById('quiz-setup').style.display='none';
+  document.getElementById('quiz-area').style.display='block';
+  document.getElementById('quiz-results').style.display='none';
+  document.getElementById('qz-topic-lbl').textContent='AI QUIZ';
+  document.getElementById('qz-counter').textContent='Loading AI questions...';
+  document.getElementById('qz-body').innerHTML='<div style="text-align:center;padding:32px;color:var(--muted)">✨ Generating questions...</div>';
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:'Generate 5 multiple choice questions about the skeletal system (bone tissue, skeleton anatomy, joints) for an anatomy student. Return ONLY valid JSON array: [{"q":"question","opts":["A","B","C","D"],"a":0,"exp":"explanation"},...] where a is the 0-indexed correct answer.'}]})});
+    const d=await r.json();
+    const txt=d.content?.[0]?.text||'[]';
+    const clean=txt.replace(/```json|```/g,'').trim();
+    const qs=JSON.parse(clean).map(q=>({...q,type:'mc'}));
+    ST.quiz={questions:qs,cur:0,score:0,answered:false,topic:'ai'};
+    showQuestion();
+  }catch(e){
+    document.getElementById('qz-body').innerHTML='<p style="color:var(--wrong);text-align:center">Could not generate AI questions. Check connection.</p>';
+  }
+}
+
 const PHOTO_SVG_KEYS=['osteon','spongyBone','hyalineCart','fibroCart','growthPlate','longBone','skull','vertebra','knee','shoulder','scapula','synovial'];
 function buildFallbackHTML(p,idx){
   const svgKey=PHOTO_SVG_KEYS[idx];
